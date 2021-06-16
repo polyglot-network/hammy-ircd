@@ -4,30 +4,13 @@ import { Packet } from "./modules/packet.js";
 import { config } from "./modules/config.js";
 import { User } from "./modules/user.js";
 import {uuid} from "./modules/uuid.js";
+import {Network} from "./modules/network.js";
 const tcpServer = new net.Server();
 tcpServer.listen(config.port, function() {
     console.log(`Starting hammy-ircd ${config.version} on ${config.hostname}:${config.port}`);
 });
 
-let server = {
-    connections: {},
-    channels: {},
-    broadcast: (packet)=>{
-        let serialPacket = packet.serialize();
-        for (let conn in server.connections){
-            server.connections[conn].write(serialPacket);
-        }
-    },
-    echo: (user, packet)=>{
-        let serialPacket = packet.serialize();
-        for (let conn in server.connections){
-            if (user.data.UUID == conn){
-                continue;
-            }
-            server.connections[conn].write(serialPacket);
-        }
-    },
-}
+let network = new Network();
 
 tcpServer.on('connection', function(socket) {
     console.log('A new connection has been established.');
@@ -36,7 +19,7 @@ tcpServer.on('connection', function(socket) {
     user.data.UUID = uuid();
     user.data.CONNECTEDSERVER = config.hostname;
     user.data.HOSTNAME = `${user.data.UUID}.hammy.network`;
-    server.connections[user.data.UUID] = socket;
+    network.data.connections[user.data.UUID] = socket;
 
     socket.on('data', function(chunk) {
         let data = chunk.toString();
@@ -50,7 +33,7 @@ tcpServer.on('connection', function(socket) {
                 case "NICK":
                     if (user.data.USERNAME){
                         packet.data.source = user.data.USERNAME;
-                        server.broadcast(packet);
+                        network.broadcast(packet);
                     }
                     user.data.NICK = packet.data.parameters[0];
                     break;
@@ -77,28 +60,28 @@ tcpServer.on('connection', function(socket) {
                     socket.sendPacketFromServer({command: "PONG", parameters:[user.data.USERNAME].concat(packet.data.parameters)});
                     break;
                 case "LUSERS":
-                    socket.sendPacketFromServer({command: "251", parameters:[`There are ${Object.keys(server.connections).length} users and 0 invisible on 1 servers`]});
+                    socket.sendPacketFromServer({command: "251", parameters:[`There are ${Object.keys(network.data.connections).length} users and 0 invisible on 1 servers`]});
                     break;
                 case "JOIN":
                     packet.data.source = user.getSource();
-                    server.broadcast(packet);
+                    network.broadcast(packet);
                     let channel = packet.data.parameters[0]
-                    if (server.channels[channel] == undefined){
-                        server.channels[channel] = []
+                    if (network.data.channels[channel] == undefined){
+                        network.data.channels[channel] = []
                     }
-                    server.channels[channel].push(user);
+                    network.data.channels[channel].push(user);
                     break;
                 case "PRIVMSG":
                     packet.data.source = user.getSource();
-                    server.echo(user, packet);
+                    network.echo(user, packet);
                     break;
                 case "WHO":
                     if (packet.data.parameters[0]){
                         let channel = packet.data.parameters[0];
-                        if (server.channels[channel] == undefined)
+                        if (network.data.channels[channel] == undefined)
                             return;
-                        for (let i in server.channels[channel]){
-                            let u = server.channels[channel][i];
+                        for (let i in network.data.channels[channel]){
+                            let u = network.data.channels[channel][i];
                             socket.sendPacketFromServer({command: "352", parameters: [user.data.NICK, channel, `~${u.data.USERNAME}`, u.data.HOSTNAME, u.data.CONNECTEDSERVER, u.data.NICK, "H :0", u.data.USERNAME]})
                         }
                         socket.sendPacketFromServer({command: "315", parameters: [user.data.NICK, channel, ":End of /WHO list."]})
@@ -106,7 +89,7 @@ tcpServer.on('connection', function(socket) {
                     break;
                 case "PART":
                     packet.data.source = user.getSource();
-                    server.broadcast(packet);
+                    network.broadcast(packet);
                     break;
                 default:
                     console.log(`UNKNOWN COMMAND ${packet.data.command}`);
