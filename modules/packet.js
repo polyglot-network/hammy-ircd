@@ -48,7 +48,7 @@ export class Packet {
             } else if (bit.startsWith(":") && data.source == undefined){
                 data.source = bit.replace(":", "");
             } else if (data.command == undefined){
-                data.command = bit;
+                data.command = bit.toUpperCase();
                 i++;
                 data.parameters = split.slice(i);
                 break;
