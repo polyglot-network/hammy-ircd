@@ -10,15 +10,32 @@ tcpServer.listen(config.port, function() {
 });
 
 let server = {
-    connections: {}
+    connections: {},
+    channels: {},
+    broadcast: (packet)=>{
+        let serialPacket = packet.serialize();
+        for (let conn in server.connections){
+            server.connections[conn].write(serialPacket);
+        }
+    },
+    echo: (user, packet)=>{
+        let serialPacket = packet.serialize();
+        for (let conn in server.connections){
+            if (user.data.UUID == conn){
+                continue;
+            }
+            server.connections[conn].write(serialPacket);
+        }
+    },
 }
 
 tcpServer.on('connection', function(socket) {
     console.log('A new connection has been established.');
     let user = new User();
     socket.user = user;
-    user.data.HOSTNAME = "fedora.hammy.network";
     user.data.UUID = uuid();
+    user.data.CONNECTEDSERVER = config.hostname;
+    user.data.HOSTNAME = `${user.data.UUID}.hammy.network`;
     server.connections[user.data.UUID] = socket;
 
     socket.on('data', function(chunk) {
@@ -31,6 +48,10 @@ tcpServer.on('connection', function(socket) {
             let packet = Packet.parse(p);
             switch (packet.data.command){
                 case "NICK":
+                    if (user.data.USERNAME){
+                        packet.data.source = user.data.USERNAME;
+                        server.broadcast(packet);
+                    }
                     user.data.NICK = packet.data.parameters[0];
                     break;
                 case "USER":
@@ -59,12 +80,33 @@ tcpServer.on('connection', function(socket) {
                     socket.sendPacketFromServer({command: "251", parameters:[`There are ${Object.keys(server.connections).length} users and 0 invisible on 1 servers`]});
                     break;
                 case "JOIN":
-                    packet.data.source = `${user.data.NICK}!~${user.data.USERNAME}@${user.data.HOSTNAME}`;
-                    socket.sendPacket(packet);
+                    packet.data.source = user.getSource();
+                    server.broadcast(packet);
+                    let channel = packet.data.parameters[0]
+                    if (server.channels[channel] == undefined){
+                        server.channels[channel] = []
+                    }
+                    server.channels[channel].push(user);
+                    break;
+                case "PRIVMSG":
+                    packet.data.source = user.getSource();
+                    server.echo(user, packet);
+                    break;
+                case "WHO":
+                    if (packet.data.parameters[0]){
+                        let channel = packet.data.parameters[0];
+                        if (server.channels[channel] == undefined)
+                            return;
+                        for (let i in server.channels[channel]){
+                            let u = server.channels[channel][i];
+                            socket.sendPacketFromServer({command: "352", parameters: [user.data.NICK, channel, `~${u.data.USERNAME}`, u.data.HOSTNAME, u.data.CONNECTEDSERVER, u.data.NICK, "H :0", u.data.USERNAME]})
+                        }
+                        socket.sendPacketFromServer({command: "315", parameters: [user.data.NICK, channel, ":End of /WHO list."]})
+                    }
                     break;
                 case "PART":
-                    packet.data.source = `${user.data.NICK}!~${user.data.USERNAME}@${user.data.HOSTNAME}`;
-                    socket.sendPacket(packet);
+                    packet.data.source = user.getSource();
+                    server.broadcast(packet);
                     break;
                 default:
                     console.log(`UNKNOWN COMMAND ${packet.data.command}`);
