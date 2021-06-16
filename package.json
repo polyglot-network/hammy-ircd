@@ -1,0 +1,14 @@
+{
+  "name": "hammy-irdc",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "hammy@libera",
+  "type": "module",
+  "license": "MIT",
+  "dependencies": {
+  }
+}
