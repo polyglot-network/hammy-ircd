@@ -32,7 +32,7 @@ tcpServer.on('connection', function(socket) {
             switch (packet.data.command){
                 case "NICK":
                     if (user.data.USERNAME){
-                        packet.data.source = user.data.USERNAME;
+                        packet.data.source = user.data.NICK;
                         network.broadcast(packet);
                     }
                     user.data.NICK = packet.data.parameters[0];
