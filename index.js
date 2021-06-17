@@ -71,8 +71,14 @@ tcpServer.on('connection', function(socket) {
                         if (network.data.channels[channel] == undefined){
                             network.data.channels[channel] = new Channel(channel)
                         }
-                        network.data.channels[channel].addUser(user);
-                        network.data.channels[channel].broadcast(packet)
+                        let channelObj = network.data.channels[channel];
+                        channelObj.addUser(user);
+                        channelObj.broadcast(packet)
+                        for (let u of channelObj.data.users){
+                            socket.sendPacketFromServer({command: "353", parameters: [`${user.getSource()}`, "=", channel, u.data.NICK]})
+
+                        }
+                        socket.sendPacketFromServer({command: "366", parameters: [ channel, ":End of /NAMES list."]})
                     }
                     break;
                 case "PRIVMSG":
