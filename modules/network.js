@@ -21,4 +21,11 @@ export class Network {
             this.data.connections[conn].write(serialPacket);
         }
     }
+    cullUser(user){
+        delete this.data.connections[user.data.UUID];
+        for (let i in this.data.channels){
+            this.data.channels[i].cullUser(user);
+        }
+        delete this.data.users[user.data.UUID];
+    }
 }

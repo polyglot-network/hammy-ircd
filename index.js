@@ -5,6 +5,7 @@ import { config } from "./modules/config.js";
 import { User } from "./modules/user.js";
 import {uuid} from "./modules/uuid.js";
 import {Network} from "./modules/network.js";
+import { Channel } from "./modules/channel.js";
 const tcpServer = new net.Server();
 tcpServer.listen(config.port, function() {
     console.log(`Starting hammy-ircd ${config.version} on ${config.hostname}:${config.port}`);
@@ -16,6 +17,7 @@ tcpServer.on('connection', function(socket) {
     console.log('A new connection has been established.');
     let user = new User();
     socket.user = user;
+    user.socket = socket;
     user.data.UUID = uuid();
     user.data.CONNECTEDSERVER = config.hostname;
     user.data.HOSTNAME = `${user.data.UUID}.hammy.network`;
@@ -64,32 +66,37 @@ tcpServer.on('connection', function(socket) {
                     break;
                 case "JOIN":
                     packet.data.source = user.getSource();
-                    network.broadcast(packet);
                     let channel = packet.data.parameters[0]
                     if (network.data.channels[channel] == undefined){
-                        network.data.channels[channel] = []
+                        network.data.channels[channel] = new Channel(channel)
                     }
-                    network.data.channels[channel].push(user);
+                    network.data.channels[channel].addUser(user);
+                    network.data.channels[channel].broadcast(packet)
                     break;
                 case "PRIVMSG":
                     packet.data.source = user.getSource();
                     network.echo(user, packet);
                     break;
-                case "WHO":
-                    if (packet.data.parameters[0]){
-                        let channel = packet.data.parameters[0];
-                        if (network.data.channels[channel] == undefined)
-                            return;
-                        for (let i in network.data.channels[channel]){
-                            let u = network.data.channels[channel][i];
-                            socket.sendPacketFromServer({command: "352", parameters: [user.data.NICK, channel, `~${u.data.USERNAME}`, u.data.HOSTNAME, u.data.CONNECTEDSERVER, u.data.NICK, "H :0", u.data.USERNAME]})
-                        }
-                        socket.sendPacketFromServer({command: "315", parameters: [user.data.NICK, channel, ":End of /WHO list."]})
-                    }
-                    break;
+                // case "WHO":
+                //     if (packet.data.parameters[0]){
+                //         let channel = packet.data.parameters[0];
+                //         if (network.data.channels[channel] == undefined)
+                //             return;
+                //         for (let i in network.data.channels[channel].data.users){
+                //             let u = network.data.channels[channel].data.users[i];
+                //             socket.sendPacketFromServer({command: "352", parameters: [user.data.NICK, channel, "152", `~${u.data.USERNAME}`, u.data.HOSTNAME, u.data.CONNECTEDSERVER, u.data.NICK, ": :", u.data.USERNAME]})
+                //         }
+                //         socket.sendPacketFromServer({command: "315", parameters: [user.data.NICK, channel, ":End of /WHO list."]})
+                //     }
+                //     break;
                 case "PART":
                     packet.data.source = user.getSource();
                     network.broadcast(packet);
+                    break;
+                case "QUIT":
+                    packet.data.source = user.getSource();
+                    network.broadcast(packet);
+                    socket.destroy();
                     break;
                 default:
                     console.log(`UNKNOWN COMMAND ${packet.data.command}`);
@@ -101,6 +108,7 @@ tcpServer.on('connection', function(socket) {
 
     socket.on('end', function() {
         console.log('Closing connection with the client');
+        network.cullUser(user);
     });
 
     socket.on('error', function(err) {
