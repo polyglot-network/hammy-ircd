@@ -21,6 +21,16 @@ export class Network {
             this.data.connections[conn].write(serialPacket);
         }
     }
+    broadcastChannel(channel, packet){
+        if (this.data.channels[channel] != undefined){
+            this.data.channels[channel].broadcast(packet);
+        }
+    }
+    echoChannel(channel, user, packet){
+        if (this.data.channels[channel] != undefined){
+            this.data.channels[channel].echo(user, packet);
+        }
+    }
     cullUser(user){
         delete this.data.connections[user.data.UUID];
         for (let i in this.data.channels){

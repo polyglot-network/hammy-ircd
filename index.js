@@ -65,17 +65,20 @@ tcpServer.on('connection', function(socket) {
                     socket.sendPacketFromServer({command: "251", parameters:[`There are ${Object.keys(network.data.connections).length} users and 0 invisible on 1 servers`]});
                     break;
                 case "JOIN":
-                    packet.data.source = user.getSource();
-                    let channel = packet.data.parameters[0]
-                    if (network.data.channels[channel] == undefined){
-                        network.data.channels[channel] = new Channel(channel)
+                    {
+                        packet.data.source = user.getSource();
+                        let channel = packet.data.parameters[0]
+                        if (network.data.channels[channel] == undefined){
+                            network.data.channels[channel] = new Channel(channel)
+                        }
+                        network.data.channels[channel].addUser(user);
+                        network.data.channels[channel].broadcast(packet)
                     }
-                    network.data.channels[channel].addUser(user);
-                    network.data.channels[channel].broadcast(packet)
                     break;
                 case "PRIVMSG":
                     packet.data.source = user.getSource();
-                    network.echo(user, packet);
+                    let channel = packet.data.parameters[0] 
+                    network.echoChannel(channel, user, packet);
                     break;
                 // case "WHO":
                 //     if (packet.data.parameters[0]){
@@ -90,8 +93,14 @@ tcpServer.on('connection', function(socket) {
                 //     }
                 //     break;
                 case "PART":
-                    packet.data.source = user.getSource();
-                    network.broadcast(packet);
+                    {
+                        packet.data.source = user.getSource();
+                        let channel = packet.data.parameters[0]
+                        if (network.data.channels[channel] != undefined){
+                            network.broadcastChannel(channel, packet);
+                            network.data.channels[channel].cullUser(user);
+                        }
+                    }
                     break;
                 case "QUIT":
                     packet.data.source = user.getSource();

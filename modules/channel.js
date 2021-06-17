@@ -19,4 +19,13 @@ export class Channel {
             this.data.users[conn].socket.write(serialPacket);
         }
     }
+    echo(user, packet){
+        let serialPacket = packet.serialize();
+        for (let u of this.data.users){
+            if (u.data.UUID == user.data.UUID){
+                continue;
+            }
+            u.socket.write(serialPacket);
+        }
+    }
 }
