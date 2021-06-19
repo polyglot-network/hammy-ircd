@@ -7,7 +7,7 @@ let USER_C2S = ({socket, packet, network}) => {
     user.socket = socket;
     user.data.UUID = socket.data.UUID;
     user.data.CONNECTEDSERVER = config.hostname;
-    user.data.HOSTNAME = `${user.data.UUID}.hammy.network`;
+    user.data.HOSTNAME = `${user.data.UUID}.hammy.polyglottal.network`;
     user.data.NICK = socket.data.TEMPNICK;
     network.data.users[user.data.UUID] = user;
 

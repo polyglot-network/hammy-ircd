@@ -2,6 +2,7 @@ import {config} from "./config.js";
 
 export class Packet {
     data = {
+        original: "",
         tags: {},
         source: "",
         command: "",
@@ -32,9 +33,8 @@ export class Packet {
         return text;
     }
     static parse(packet){
-        console.log(packet);
         let split = packet.split(" ");
-        let data = {};
+        let data = {original: packet};
         for (let i in split){
             let bit = split[i];
             if (bit.startsWith("@") && data.tags == undefined){
