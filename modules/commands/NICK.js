@@ -11,6 +11,7 @@ let NICK_C2S = ({socket, user, packet, network}) => {
         socket.data.TEMPNICK = packet.data.parameters[0];
     } else {
         packet.data.source = user.data.NICK;
+        user.data.NICK = packet.data.parameters[0];
         network.broadcast(packet);
     }
 }
