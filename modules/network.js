@@ -3,7 +3,7 @@ export class Network {
         connections: [],
         channels: {},
         self: null,
-        users: []
+        users: {}
     };
     constructor(){}
     broadcast(packet){

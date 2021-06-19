@@ -23,6 +23,7 @@ tcpServer.on('connection', function(socket) {
     user.data.CONNECTEDSERVER = config.hostname;
     user.data.HOSTNAME = `${user.data.UUID}.hammy.network`;
     network.data.connections[user.data.UUID] = socket;
+    network.data.users[user.data.UUID] = user;
 
     socket.on('data', function(chunk) {
         let data = chunk.toString();
