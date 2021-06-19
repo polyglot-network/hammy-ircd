@@ -7,6 +7,7 @@ import {uuid} from "./modules/uuid.js";
 import {Network} from "./modules/network.js";
 import { Channel } from "./modules/channel.js";
 import { commandHandler } from "./modules/command.js";
+import { QUIT_C2S } from "./modules/commands/QUIT.js";
 const tcpServer = new net.Server();
 tcpServer.listen(config.port, function() {
     console.log(`Starting hammy-ircd ${config.version} on ${config.hostname}:${config.port}`);
@@ -35,7 +36,10 @@ tcpServer.on('connection', function(socket) {
     socket.on('end', function() {
         console.log('Closing connection with the client');
         if (network.data.users[UUID] != undefined){
-            network.cullUser(network.data.users[UUID]);
+            let user = network.data.users[UUID];
+            let QUIT_PACKET = new Packet({command: "QUIT"})
+            QUIT_C2S({user, network, packet: QUIT_PACKET});
+            network.cullUser(user);
         }
     });
 
