@@ -1,6 +1,5 @@
 import { config } from "../config.js";
 let NICK_C2S = ({socket, user, packet, network}) => {
-    console.log(network.data.users)
     for (let uID in network.data.users){
         let u = network.data.users[uID];
         if (u.data.NICK == packet.data.parameters[0]){

@@ -1,6 +1,6 @@
 export class Channel {
     data = {
-        users: [],
+        users: {},
         name: "",
         mode: ""
     };
@@ -8,10 +8,10 @@ export class Channel {
         this.data.name = name;
     }
     addUser(user){
-        this.data.users.push(user);
+        this.data.users[user.data.UUID] = user;
     }
     cullUser(user){
-        this.data.users = this.data.users.filter(u => u.data.UUID != user.data.UUID);
+        delete this.data.users[user.data.UUID];
     }
     broadcast(packet){
         let serialPacket = packet.serialize();
@@ -21,7 +21,8 @@ export class Channel {
     }
     echo(user, packet){
         let serialPacket = packet.serialize();
-        for (let u of this.data.users){
+        for (let uID in this.data.users){
+            let u = this.data.users[uID];
             if (u.data.UUID == user.data.UUID){
                 continue;
             }
