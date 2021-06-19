@@ -1,4 +1,5 @@
 import { config } from "../config.js";
+import { MOTD_C2S } from "./MOTD.js";
 let USER_C2S = ({socket, user, packet, network}) => {
     user.data.USERNAME = packet.data.parameters[0];
     socket.sendPacketFromServer({
@@ -17,6 +18,9 @@ let USER_C2S = ({socket, user, packet, network}) => {
         command: "004",
         parameters:[user.data.NICK, config.hostname, config.version, "o", ""]
     });
+
+    MOTD_C2S({socket, user, packet, network});
+
 }
 
 export {USER_C2S};

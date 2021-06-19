@@ -1,5 +1,6 @@
 import { JOIN_C2S } from "./commands/JOIN.js"
 import { LUSERS_C2S } from "./commands/LUSERS.js"
+import { MOTD_C2S } from "./commands/MOTD.js"
 import { NICK_C2S } from "./commands/NICK.js"
 import { PART_C2S } from "./commands/PART.js"
 import { PING_C2S } from "./commands/PING.js"
@@ -15,7 +16,8 @@ const COMMAND_TREE_C2S = {
     "PING": PING_C2S,
     "PRIVMSG": PRIVMSG_C2S,
     "QUIT": QUIT_C2S,
-    "USER": USER_C2S
+    "USER": USER_C2S,
+    "MOTD": MOTD_C2S
 }
 
 let commandHandler = ({socket, user, packet, network}) => {
