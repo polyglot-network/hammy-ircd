@@ -21,9 +21,15 @@ const COMMAND_TREE_C2S = {
 }
 
 let commandHandler = ({socket, user, packet, network}) => {
-   if (COMMAND_TREE_C2S.hasOwnProperty(packet.data.command)){
-       COMMAND_TREE_C2S[packet.data.command]({socket, user, packet, network});
-   } 
+    if (packet.data.source != ""){
+        packet.data.source == "";
+    }
+    if (Object.keys(packet.data.tags).length != 0){
+        packet.data.tags = {};
+    }
+    if (COMMAND_TREE_C2S.hasOwnProperty(packet.data.command)){
+        COMMAND_TREE_C2S[packet.data.command]({socket, user, packet, network});
+    } 
 }
 
 export {commandHandler};
