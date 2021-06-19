@@ -28,7 +28,7 @@ let commandHandler = ({socket, user, packet, network}) => {
         packet.data.tags = {};
     }
     if (COMMAND_TREE_C2S.hasOwnProperty(packet.data.command)){
-        COMMAND_TREE_C2S[packet.data.command]({socket, user, packet, network});
+        COMMAND_TREE_C2S[packet.data.command]({socket, user: socket.user?socket.user:undefined, packet, network});
     } 
 }
 

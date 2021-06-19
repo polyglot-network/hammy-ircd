@@ -16,15 +16,10 @@ let network = new Network();
 
 tcpServer.on('connection', function(socket) {
     console.log('A new connection has been established.');
-    let user = new User();
-    socket.user = user;
-    user.socket = socket;
-    user.data.UUID = uuid();
-    user.data.CONNECTEDSERVER = config.hostname;
-    user.data.HOSTNAME = `${user.data.UUID}.hammy.network`;
-    network.data.connections[user.data.UUID] = socket;
-    network.data.users[user.data.UUID] = user;
-
+    socket.data = {}
+    let UUID = uuid();
+    socket.data.UUID = UUID;
+    network.data.connections[UUID] = socket;
     socket.on('data', function(chunk) {
         let data = chunk.toString();
         data = data.split("\r\n");
@@ -33,13 +28,15 @@ tcpServer.on('connection', function(socket) {
                 return;
             }
             let packet = Packet.parse(p);
-            commandHandler({socket, user, packet, network});
+            commandHandler({socket, packet, network});
         })
     });
 
     socket.on('end', function() {
         console.log('Closing connection with the client');
-        network.cullUser(user);
+        if (network.data.users[UUID] != undefined){
+            network.cullUser(network.data.users[UUID]);
+        }
     });
 
     socket.on('error', function(err) {

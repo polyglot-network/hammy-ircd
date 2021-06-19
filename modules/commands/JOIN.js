@@ -9,7 +9,8 @@ let JOIN_C2S = ({socket, user, packet, network}) => {
     let channelObj = network.data.channels[channel];
     channelObj.addUser(user);
     channelObj.broadcast(packet)
-    for (let u of channelObj.data.users){
+    for (let uID in channelObj.data.users){
+        let u = channelObj.data.users[uID];
         socket.sendPacketFromServer({command: "353", parameters: [`${user.getSource()}`, "=", channel, u.data.NICK]})
 
     }
